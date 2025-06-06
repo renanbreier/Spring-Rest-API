@@ -1,6 +1,5 @@
 package com.example.api.service;
 
-import com.example.api.entity.Curso;
 import com.example.api.entity.Instrutor;
 import com.example.api.repository.InstrutorRepository;
 import org.springframework.beans.factory.annotation.Autowired;

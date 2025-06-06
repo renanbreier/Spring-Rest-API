@@ -1,7 +1,6 @@
 package com.example.api.controller;
 
 import com.example.api.entity.Aluno;
-import com.example.api.entity.Curso;
 import com.example.api.service.AlunoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

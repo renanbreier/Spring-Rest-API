@@ -1,7 +1,6 @@
 package com.example.api.service;
 
 import com.example.api.entity.Aluno;
-import com.example.api.entity.Curso;
 import com.example.api.repository.AlunoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
