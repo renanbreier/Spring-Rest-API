@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class InscricaoService {
@@ -43,5 +44,9 @@ public class InscricaoService {
 
     public List<Inscricao> listarTodas() {
         return inscricaoRepository.findAll();
+    }
+
+     public Optional<Curso> buscarPorId(Long id) {
+        return cursoRepository.findById(id);
     }
 }

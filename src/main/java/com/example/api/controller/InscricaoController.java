@@ -32,4 +32,11 @@ public class InscricaoController {
     public ResponseEntity<List<Inscricao>> listarInscricoes() {
         return ResponseEntity.ok(inscricaoService.listarTodas());
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
+        return inscricaoService.buscarPorId(id)
+            .<ResponseEntity<?>>map(ResponseEntity::ok)
+            .orElse(ResponseEntity.status(404).body("Inscrição não encontrado"));
+    }
 }

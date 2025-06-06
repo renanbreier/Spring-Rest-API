@@ -1,12 +1,19 @@
 package com.example.api.controller;
 
+import com.example.api.dto.CursoRequestDTO;
+import com.example.api.dto.CursoResponseDTO;
+import com.example.api.dto.InstrutorResponseDTO;
 import com.example.api.entity.Curso;
+import com.example.api.entity.Instrutor;
 import com.example.api.service.CursoService;
+import com.example.api.service.InstrutorService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/cursos")
@@ -15,19 +22,61 @@ public class CursoController {
     @Autowired
     private CursoService cursoService;
 
+    @Autowired
+    private InstrutorService instrutorService;
+
     @PostMapping
-    public ResponseEntity<?> criarCurso(@RequestBody Curso curso) {
+    public ResponseEntity<?> criarCurso(@RequestBody CursoRequestDTO dto) {
         try {
+            Optional<Instrutor> instrutorOpt = instrutorService.buscarPorId(dto.getInstrutorId());
+            if (instrutorOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Instrutor não encontrado");
+            }
+
+            Curso curso = new Curso();
+            curso.setNome(dto.getNome());
+            curso.setDescricao(dto.getDescricao());
+            curso.setInstrutor(instrutorOpt.get());
+
             Curso novo = cursoService.salvar(curso);
-            return ResponseEntity.status(201).body(novo);
+
+            // Monta o DTO de resposta
+            Instrutor instrutor = novo.getInstrutor();
+            InstrutorResponseDTO instrutorDTO = new InstrutorResponseDTO(
+                instrutor.getId(), instrutor.getNome(), instrutor.getEmail()
+            );
+
+            CursoResponseDTO responseDTO = new CursoResponseDTO(
+                novo.getId(), novo.getNome(), novo.getDescricao(), instrutorDTO
+            );
+
+            return ResponseEntity.status(201).body(responseDTO);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Erro ao criar curso: " + e.getMessage());
+            return ResponseEntity.status(500).body("Erro ao criar curso: " + e.getMessage());
         }
     }
 
     @GetMapping
-    public ResponseEntity<List<Curso>> listarCursos() {
-        return ResponseEntity.ok(cursoService.listarTodos());
+    public ResponseEntity<List<CursoResponseDTO>> listarCursos() {
+        List<CursoResponseDTO> cursos = cursoService.listarTodos()
+            .stream()
+            .map(curso -> {
+                Instrutor instrutor = curso.getInstrutor();
+                InstrutorResponseDTO instrutorDTO = new InstrutorResponseDTO(
+                    instrutor.getId(),
+                    instrutor.getNome(),
+                    instrutor.getEmail()
+                );
+                return new CursoResponseDTO(
+                    curso.getId(),
+                    curso.getNome(),
+                    curso.getDescricao(),
+                    instrutorDTO
+                );
+            })
+            .toList();
+
+        return ResponseEntity.ok(cursos);
     }
 
    @GetMapping("/{id}")
@@ -35,7 +84,7 @@ public class CursoController {
         return cursoService.buscarPorId(id)
             .<ResponseEntity<?>>map(ResponseEntity::ok)
             .orElse(ResponseEntity.status(404).body("Curso não encontrado"));
-}
+    }
 
 
     @PutMapping("/{id}")
