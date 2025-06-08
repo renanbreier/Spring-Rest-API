@@ -26,19 +26,20 @@ public class InscricaoService {
 
     public Inscricao inscrever(Long alunoId, Long cursoId) {
         Aluno aluno = alunoRepository.findById(alunoId)
-                .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
+            .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
 
         Curso curso = cursoRepository.findById(cursoId)
-                .orElseThrow(() -> new RuntimeException("Curso não encontrado"));
+            .orElseThrow(() -> new RuntimeException("Curso não encontrado"));
 
-        // Adiciona o curso ao aluno e o aluno ao curso
-        aluno.getCursos().add(curso);
-        curso.getAlunos().add(aluno);
+        // Verifica se já existe inscrição com esse aluno + curso (opcional, boa prática)
+        Optional<Inscricao> existente = inscricaoRepository
+            .findByAlunoIdAndCursoId(alunoId, cursoId);
 
-        // Salva novamente ambos (opcional, dependendo do CascadeType)
-        alunoRepository.save(aluno);
-        cursoRepository.save(curso);
+        if (existente.isPresent()) {
+            throw new RuntimeException("Inscrição já existe para este aluno e curso");
+        }
 
+        // Apenas cria e salva a inscrição diretamente
         return inscricaoRepository.save(new Inscricao(aluno, curso));
     }
 
@@ -46,7 +47,31 @@ public class InscricaoService {
         return inscricaoRepository.findAll();
     }
 
-     public Optional<Curso> buscarPorId(Long id) {
-        return cursoRepository.findById(id);
+    public Optional<Inscricao> buscarPorId(Long id) {
+        return inscricaoRepository.findById(id);
     }
+
+    public Inscricao atualizar(Long id, Long novoAlunoId, Long novoCursoId) {
+        Inscricao inscricao = inscricaoRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Inscrição não encontrada"));
+
+        Aluno aluno = alunoRepository.findById(novoAlunoId)
+            .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
+
+        Curso curso = cursoRepository.findById(novoCursoId)
+            .orElseThrow(() -> new RuntimeException("Curso não encontrado"));
+
+        inscricao.setAluno(aluno);
+        inscricao.setCurso(curso);
+
+        return inscricaoRepository.save(inscricao);
+    }
+
+    public void deletar(Long id) {
+        if (!inscricaoRepository.existsById(id)) {
+            throw new RuntimeException("Inscrição não encontrado");
+        }
+        inscricaoRepository.deleteById(id);
+    }
+
 }

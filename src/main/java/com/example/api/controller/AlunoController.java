@@ -1,5 +1,7 @@
 package com.example.api.controller;
 
+import com.example.api.dto.AlunoResponseDTO;
+import com.example.api.dto.CursoResumoDTO;
 import com.example.api.entity.Aluno;
 import com.example.api.service.AlunoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/alunos")
@@ -26,15 +29,45 @@ public class AlunoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Aluno>> listarAlunos() {
-        return ResponseEntity.ok(alunoService.listarTodos());
+    public ResponseEntity<List<AlunoResponseDTO>> listarAlunos() {
+        List<AlunoResponseDTO> alunos = alunoService.listarTodos()
+            .stream()
+            .map(a -> new AlunoResponseDTO(a.getId(), a.getNome(), a.getEmail()))
+            .toList();
+
+        return ResponseEntity.ok(alunos);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
-        return alunoService.buscarPorId(id)
-            .<ResponseEntity<?>>map(ResponseEntity::ok)
-            .orElse(ResponseEntity.status(404).body("Aluno não encontrado"));
+    public ResponseEntity<?> buscarAlunoPorId(@PathVariable Long id) {
+        Optional<Aluno> alunoOpt = alunoService.buscarPorId(id);
+
+        if (alunoOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Aluno não encontrado");
+        }
+
+        Aluno a = alunoOpt.get();
+        AlunoResponseDTO dto = new AlunoResponseDTO(a.getId(), a.getNome(), a.getEmail());
+
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/{id}/cursos")
+    public ResponseEntity<?> listarCursosDoAluno(@PathVariable Long id) {
+        Optional<Aluno> alunoOpt = alunoService.buscarPorId(id);
+
+        if (alunoOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Aluno não encontrado");
+        }
+
+        Aluno aluno = alunoOpt.get();
+
+        List<CursoResumoDTO> cursos = aluno.getCursos()
+            .stream()
+            .map(curso -> new CursoResumoDTO(curso.getId(), curso.getNome(), curso.getDescricao()))
+            .toList();
+
+        return ResponseEntity.ok(cursos);
     }
 
     @PutMapping("/{id}")

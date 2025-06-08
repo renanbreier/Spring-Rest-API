@@ -1,8 +1,11 @@
 package com.example.api.controller;
 
+import com.example.api.dto.AlunoResumoDTO;
 import com.example.api.dto.CursoRequestDTO;
 import com.example.api.dto.CursoResponseDTO;
+import com.example.api.dto.CursoResumoDTO;
 import com.example.api.dto.InstrutorResponseDTO;
+import com.example.api.entity.Aluno;
 import com.example.api.entity.Curso;
 import com.example.api.entity.Instrutor;
 import com.example.api.service.CursoService;
@@ -81,11 +84,48 @@ public class CursoController {
 
    @GetMapping("/{id}")
     public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
-        return cursoService.buscarPorId(id)
-            .<ResponseEntity<?>>map(ResponseEntity::ok)
-            .orElse(ResponseEntity.status(404).body("Curso não encontrado"));
+        Optional<Curso> cursoOpt = cursoService.buscarPorId(id);
+
+        if (cursoOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Curso não encontrado");
+        }
+
+        Curso curso = cursoOpt.get();
+        Instrutor instrutor = curso.getInstrutor();
+
+        InstrutorResponseDTO instrutorDTO = new InstrutorResponseDTO(
+            instrutor.getId(),
+            instrutor.getNome(),
+            instrutor.getEmail()
+        );
+
+        CursoResponseDTO cursoDTO = new CursoResponseDTO(
+            curso.getId(),
+            curso.getNome(),
+            curso.getDescricao(),
+            instrutorDTO
+        );
+
+        return ResponseEntity.ok(cursoDTO);
     }
 
+    @GetMapping("/{id}/alunos")
+    public ResponseEntity<?> listarAlunosDoCurso(@PathVariable Long id) {
+        Optional<Curso> cursoOpt = cursoService.buscarPorId(id);
+
+        if (cursoOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Curso não encontrado");
+        }
+
+        Curso curso = cursoOpt.get();
+
+        List<AlunoResumoDTO> alunos = curso.getAlunos()
+            .stream()
+            .map(aluno -> new AlunoResumoDTO(aluno.getId(), aluno.getNome(), aluno.getEmail()))
+            .toList();
+
+        return ResponseEntity.ok(alunos);
+    }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizarCurso(@PathVariable Long id, @RequestBody Curso curso) {
