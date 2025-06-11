@@ -126,11 +126,32 @@ public class CursoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> atualizarCurso(@PathVariable Long id, @RequestBody Curso curso) {
+    public ResponseEntity<?> atualizarCurso(@PathVariable Long id, @RequestBody CursoRequestDTO dto) {
         try {
-            return ResponseEntity.ok(cursoService.atualizar(id, curso));
+            Optional<Instrutor> instrutorOpt = instrutorService.buscarPorId(dto.getInstrutorId());
+            if (instrutorOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Instrutor não encontrado");
+            }
+
+            Curso novoCurso = new Curso();
+            novoCurso.setNome(dto.getNome());
+            novoCurso.setDescricao(dto.getDescricao());
+            novoCurso.setInstrutor(instrutorOpt.get());
+
+            Curso atualizado = cursoService.atualizar(id, novoCurso);
+
+            Instrutor instrutor = atualizado.getInstrutor();
+            CursoResponseDTO responseDTO = new CursoResponseDTO(
+                atualizado.getId(),
+                atualizado.getNome(),
+                atualizado.getDescricao(),
+                new InstrutorResponseDTO(instrutor.getId(), instrutor.getNome(), instrutor.getEmail())
+            );
+
+            return ResponseEntity.ok(responseDTO);
+
         } catch (RuntimeException e) {
-            return ResponseEntity.status(404).body(e.getMessage());
+            return ResponseEntity.status(404).body("Erro ao atualizar curso: " + e.getMessage());
         }
     }
 
