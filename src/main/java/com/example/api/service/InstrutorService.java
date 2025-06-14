@@ -26,12 +26,14 @@ public class InstrutorService {
         return instrutorRepository.findById(id);
     }
 
-    public Instrutor atualizar(Long id, Instrutor novoInstrutor) {
-        return instrutorRepository.findById(id).map(instrutor -> {
-            instrutor.setEmail(novoInstrutor.getEmail());
-            instrutor.setNome(novoInstrutor.getNome());
-            return instrutorRepository.save(instrutor);
-        }).orElseThrow(() -> new RuntimeException("Instrutor não encontrado"));
+    public Instrutor atualizar(Long id, String novoNome, String novoEmail) {
+        return instrutorRepository.findById(id)
+            .map(instrutor -> {
+                instrutor.setNome(novoNome);
+                instrutor.setEmail(novoEmail);
+                return instrutorRepository.save(instrutor);
+            })
+            .orElseThrow(() -> new RuntimeException("Instrutor não encontrado"));
     }
 
     public void deletar(Long id) {

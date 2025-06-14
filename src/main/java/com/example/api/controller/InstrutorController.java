@@ -1,5 +1,6 @@
 package com.example.api.controller;
 
+import com.example.api.dto.InstrutorRequestDTO;
 import com.example.api.dto.InstrutorResponseDTO;
 import com.example.api.entity.Instrutor;
 import com.example.api.service.InstrutorService;
@@ -59,13 +60,20 @@ public class InstrutorController {
         return ResponseEntity.ok(dto);
     }
 
-
-     @PutMapping("/{id}")
-    public ResponseEntity<?> atualizarInstrutores(@PathVariable Long id, @RequestBody Instrutor instrutor) {
+    @PutMapping("/{id}")
+    public ResponseEntity<?> atualizarInstrutor(@PathVariable Long id, @RequestBody InstrutorRequestDTO dto) {
         try {
-            return ResponseEntity.ok(instrutorService.atualizar(id, instrutor));
+            Instrutor instrutorAtualizado = instrutorService.atualizar(id, dto.getNome(), dto.getEmail());
+
+            InstrutorResponseDTO responseDTO = new InstrutorResponseDTO(
+                instrutorAtualizado.getId(),
+                instrutorAtualizado.getNome(),
+                instrutorAtualizado.getEmail()
+            );
+
+            return ResponseEntity.ok(responseDTO);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(404).body(e.getMessage());
+            return ResponseEntity.status(404).body("Instrutor não encontrado");
         }
     }
 
